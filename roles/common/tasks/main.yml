@@ -25,6 +25,7 @@
     - d-shlibs 
     - dh-systemd
     - avahi-daemon
+    - git
 
 - name: Remove old build directory
   file: path=/tmp/netatalk state=absent
