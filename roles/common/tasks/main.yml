@@ -1,0 +1,54 @@
+---
+- name: Install necessary packages
+  run_once: true
+  apt: name={{ item }} state=latest
+  sudo: yes
+  with_items:
+    - build-essential 
+    - devscripts
+    - debhelper
+    - cdbs 
+    - autotools-dev
+    - dh-buildinfo
+    - libdb-dev
+    - libwrap0-dev 
+    - libpam0g-dev 
+    - libcups2-dev 
+    - libkrb5-dev 
+    - libltdl3-dev
+    - libgcrypt11-dev
+    - libcrack2-dev 
+    - libavahi-client-dev 
+    - libldap2-dev 
+    - libacl1-dev 
+    - libevent-dev 
+    - d-shlibs 
+    - dh-systemd
+    - avahi-daemon
+
+- name: Remove old build directory
+  file: path=/tmp/netatalk state=absent
+
+- name: Get netatalk
+  git: repo=https://github.com/adiknoth/netatalk-debian dest=/tmp/netatalk/build
+
+- name: Build netatalk
+  command: creates=/tmp/netatalk chdir=/tmp/netatalk/build debuild -b -uc -us
+
+- name: Install netatalk
+  command: chdir=/tmp/netatalk dpkg -i libatalk*.deb netatalk*.deb
+
+- name: Enable netatalk
+  service: name=netatalk enabled=yes
+
+- name: Enable avahi-daemon
+  service: name=avahi-daemon enabled=yes
+
+- name: Clean Up
+  file: path=/tmp/netatalk state=absent
+
+- name: Do Configuration
+  lineinfile: 
+    dest: /etc/netatalk/afp.conf
+    regexp: ''
+    line: "[TimeMachine]\npath = {{ path }}\nvol size limit = {{ volumelimit }}\nvalid users = {{ validusers }}\ntime machine = yes"
