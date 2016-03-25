@@ -2,7 +2,6 @@
 - name: Install necessary packages
   run_once: true
   apt: name={{ item }} state=latest
-  sudo: yes
   with_items:
     - build-essential 
     - devscripts
@@ -34,22 +33,47 @@
   git: repo=https://github.com/adiknoth/netatalk-debian dest=/tmp/netatalk/build
 
 - name: Build netatalk
-  command: creates=/tmp/netatalk chdir=/tmp/netatalk/build debuild -b -uc -us
+  command: creates=/tmp/netatalk/netatalk*.deb chdir=/tmp/netatalk/build debuild -b -uc -us
 
 - name: Install netatalk
-  command: chdir=/tmp/netatalk dpkg -i libatalk*.deb netatalk*.deb
-
-- name: Enable netatalk
-  service: name=netatalk enabled=yes
-
-- name: Enable avahi-daemon
-  service: name=avahi-daemon enabled=yes
+  shell: chdir=/tmp/netatalk dpkg -i libatalk*.deb netatalk*.deb
+  tags: install
 
 - name: Clean Up
   file: path=/tmp/netatalk state=absent
+  tags: cleanup
+
+##### netatalk #####
+
+- name: Enable netatalk
+  service: name=netatalk enabled=yes
+  tags: netatalk
 
 - name: Do Configuration
-  lineinfile: 
-    dest: /etc/netatalk/afp.conf
-    regexp: ''
-    line: "[TimeMachine]\npath = {{ path }}\nvol size limit = {{ volumelimit }}\nvalid users = {{ validusers }}\ntime machine = yes"
+  template: src=afp.conf dest=/etc/netatalk/afp.conf
+  tags: netatalk
+
+- name: restart netatalk
+  service: name=netatalk.service state=restarted
+  tags: netatalk
+
+##### avahi #####
+- name: Enable avahi-daemon
+  service: name=avahi-daemon enabled=yes
+  tags: avahi
+
+- name: copy avahi config
+  copy: src=afpd.service dest=/etc/avahi/services/afpd.service
+  tags: avahi
+
+- name: edit nssswitch
+  lineinfile:
+    dest: /etc/nsswitch.conf
+    regexp: 'hosts:'
+    line: "hosts:    files mdns4_minimal [NOTFOUND=return] dns mdns4 mdns"
+  tags: avahi
+
+- name: restart avahi
+  service: name=avahi-daemon.service state=restarted
+  tags: avahi
+
