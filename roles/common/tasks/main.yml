@@ -25,6 +25,9 @@
     - dh-systemd
     - avahi-daemon
     - git
+    - hfsprogs
+    - hfsplus
+  tags: packages
 
 - name: Remove old build directory
   file: path=/tmp/netatalk state=absent
@@ -43,6 +46,23 @@
   file: path=/tmp/netatalk state=absent
   tags: cleanup
 
+##### avahi #####
+
+- name: Enable avahi-daemon
+  service: name=avahi-daemon enabled=yes
+  tags: avahi
+
+- name: edit nssswitch
+  lineinfile:
+    dest: /etc/nsswitch.conf
+    regexp: 'hosts:'
+    line: "hosts:    files mdns4_minimal [NOTFOUND=return] dns mdns4 mdns"
+  tags: avahi
+
+- name: restart avahi
+  service: name=avahi-daemon.service state=restarted
+  tags: avahi
+
 ##### netatalk #####
 
 - name: Enable netatalk
@@ -57,23 +77,17 @@
   service: name=netatalk.service state=restarted
   tags: netatalk
 
-##### avahi #####
-- name: Enable avahi-daemon
-  service: name=avahi-daemon enabled=yes
-  tags: avahi
+##### mount #####
 
-- name: copy avahi config
-  copy: src=afpd.service dest=/etc/avahi/services/afpd.service
-  tags: avahi
+- name: create mount point
+  file: dest={{ path }} state=directory
+  tags: mount
 
-- name: edit nssswitch
-  lineinfile:
-    dest: /etc/nsswitch.conf
-    regexp: 'hosts:'
-    line: "hosts:    files mdns4_minimal [NOTFOUND=return] dns mdns4 mdns"
-  tags: avahi
+- name: edit fstab
+  mount: name={{ path }} src='UUID={{ volume_uuid|lower }}' fstype=hfsplus opts=user,auto state=mounted
+  tags: mount
 
-- name: restart avahi
-  service: name=avahi-daemon.service state=restarted
-  tags: avahi
+- name: chmod
+  file: dest={{ path }} owner={{ valid_users }} group={{ valid_users }}
+  tags: mount
 
