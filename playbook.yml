@@ -1,7 +1,7 @@
 ---
 - hosts: all
   user: pi
-  sudo: yes
+  become: true
 
   roles:
     - common

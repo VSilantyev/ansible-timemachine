@@ -27,6 +27,7 @@
     - git
     - hfsprogs
     - hfsplus
+    - hdparm
   tags: packages
 
 - name: Remove old build directory
@@ -91,3 +92,13 @@
   file: dest={{ path }} owner={{ valid_users }} group={{ valid_users }}
   tags: mount
 
+##### hdparm #####
+
+- name: configure hdparm
+  blockinfile:
+    dest: /etc/hdparm.conf
+    block: |
+      command_line {
+        hdparm -S 240 /dev/disk/by-uuid/{{ volume_uuid|lower }}
+      }
+  tags: hdparm
