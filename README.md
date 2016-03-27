@@ -1,13 +1,28 @@
-# ansible-timemachine
+Overview
+--------
 
-A ansible playbook to setup a TimeMachine on Debian (Jessie).
+An ansible playbook to setup a TimeMachine on Debian (Jessie).
 
-Since there is currently not a package for netatalk available for Jessie this playbook provides an easy way to build and install it.
+Since there is currently not a package for netatalk 3 available for Jessie this playbook provides an easy way to build and install it.
+
+Intented to use with raspberry pi and raspbian / jessie.
+ 
+Prequisites
+-----------
+- ansible 2.0 or higher
+- osx 
 
 Setup Raspbery Pi
 -----------------
 1. Download image from https://www.raspberrypi.org/downloads/raspbian/. I've used raspbian jessy lite
-2. Install it on SD card
+2. Copy it to SD card:
+
+<pre>
+diskutil list
+sudo diskutil unmountDisk /dev/disk2
+sudo dd if=~/Downloads/2016-03-18-raspbian-jessie-lite.img of=/dev/disk2 bs=1m
+</pre>
+
 3. Boot raspberry pi, ssh to it, setup ssh key for user "pi", run raspi-config and resize root partition, reboot
 
 Prepare USB disk
